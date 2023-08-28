@@ -32,35 +32,80 @@ var createGistQuery = `
 	VALUES ($1, $2, $3);
 `
 
-func (repository *GistRepository) CreateGist(input CreateGistInput) error {
+func (repository *GistRepository) Create(input CreateGistInput) (models.Gist, error) {
+	gist := models.Gist{}
 	tx, err := repository.db.Begin()
 
 	if err != nil {
-		return err
+		return gist, err
 	}
 
 	defer tx.Rollback()
 
-	var gistId int64
-
-	err = tx.QueryRow(createGistQuery, input.Title, input.Description, input.UserId).Scan(&gistId)
+	rows, err := tx.Exec(createGistQuery, input.Title, input.Description, input.UserId)
 
 	if err != nil {
 		tx.Rollback()
-		return err
+		return gist, err
+	}
+
+	gistId, err := rows.LastInsertId()
+
+	if err != nil {
+		tx.Rollback()
+		return gist, err
 	}
 
 	for _, file := range input.Files {
 		_, err = tx.Exec(createFileQuery, file.Filename, file.Content, gistId)
 
 		if err != nil {
-			return err
+			return gist, err
 		}
 	}
 
 	tx.Commit()
 
-	return nil
+	return repository.GetGistById(GetGistByIdInput{GistId: gistId})
+}
+
+type GetGistByIdInput struct {
+	GistId int64
+}
+
+var getGistQuery = `
+	SELECT
+		gist_id,
+		user_id,
+		title,
+		description,
+		created_at,
+		updated_at
+	FROM
+		gists
+	WHERE
+		gist_id = $1;
+`
+
+func (repository *GistRepository) GetGistById(input GetGistByIdInput) (models.Gist, error) {
+	var gist models.Gist
+
+	row := repository.db.QueryRow(getGistQuery, input.GistId)
+
+	err := row.Scan(
+		&gist.GistId,
+		&gist.UserId,
+		&gist.Title,
+		&gist.Description,
+		&gist.CreatedAt,
+		&gist.UpdatedAt,
+	)
+
+	if err != nil {
+		return gist, err
+	}
+
+	return gist, nil
 }
 
 type FindGistsByUserIdInput struct {

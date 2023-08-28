@@ -31,4 +31,5 @@ func SetupRoutes(app *fiber.App) {
 
 	gistsController := controllers.NewGistsController(gistRepository)
 	app.Get("/gists", authMiddleware.Handle, gistsController.GetGists)
+	app.Post("/gists", authMiddleware.Handle, gistsController.CreateGist)
 }

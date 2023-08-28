@@ -22,10 +22,21 @@ var createUserQuery = `
 	VALUES ($1, $2, $3, $4);
 `
 
-func (repository *UserRepository) Create(input CreateUserInput) error {
-	_, err := repository.db.Exec(createUserQuery, input.Name, input.Username, input.Email, input.Password)
+func (repository *UserRepository) Create(input CreateUserInput) (models.User, error) {
+	user := models.User{}
+	result, err := repository.db.Exec(createUserQuery, input.Name, input.Username, input.Email, input.Password)
 
-	return err
+	if err != nil {
+		return user, err
+	}
+
+	userId, err := result.LastInsertId()
+
+	if err != nil {
+		return user, err
+	}
+
+	return repository.FindUserById(FindUserByIdInput{UserId: userId})
 }
 
 type FindUserByUsernameInput struct {
@@ -68,7 +79,7 @@ func (repository *UserRepository) FindUserByUsername(input FindUserByUsernameInp
 }
 
 type FindUserByIdInput struct {
-	UserId int
+	UserId int64
 }
 
 var findUserByIdQuery = `

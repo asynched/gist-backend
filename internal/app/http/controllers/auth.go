@@ -30,7 +30,7 @@ func (controller *AuthController) SignUp(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := controller.userRepository.Create(repositories.CreateUserInput{
+	user, err := controller.userRepository.Create(repositories.CreateUserInput{
 		Name:     data.Name,
 		Email:    data.Email,
 		Username: data.Username,
@@ -44,9 +44,7 @@ func (controller *AuthController) SignUp(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "User created successfully",
-	})
+	return ctx.Status(fiber.StatusCreated).JSON(user)
 }
 
 func (controller *AuthController) SignIn(ctx *fiber.Ctx) error {
