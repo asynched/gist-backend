@@ -32,12 +32,11 @@ var createGistQuery = `
 	VALUES ($1, $2, $3);
 `
 
-func (repository *GistRepository) Create(input CreateGistInput) (models.Gist, error) {
-	gist := models.Gist{}
+func (repository *GistRepository) Create(input CreateGistInput) (*models.Gist, error) {
 	tx, err := repository.db.Begin()
 
 	if err != nil {
-		return gist, err
+		return nil, err
 	}
 
 	defer tx.Rollback()
@@ -46,21 +45,21 @@ func (repository *GistRepository) Create(input CreateGistInput) (models.Gist, er
 
 	if err != nil {
 		tx.Rollback()
-		return gist, err
+		return nil, err
 	}
 
 	gistId, err := rows.LastInsertId()
 
 	if err != nil {
 		tx.Rollback()
-		return gist, err
+		return nil, err
 	}
 
 	for _, file := range input.Files {
 		_, err = tx.Exec(createFileQuery, file.Filename, file.Content, gistId)
 
 		if err != nil {
-			return gist, err
+			return nil, err
 		}
 	}
 
@@ -87,8 +86,8 @@ var getGistQuery = `
 		gist_id = $1;
 `
 
-func (repository *GistRepository) GetGistById(input GetGistByIdInput) (models.Gist, error) {
-	var gist models.Gist
+func (repository *GistRepository) GetGistById(input GetGistByIdInput) (*models.Gist, error) {
+	gist := models.Gist{}
 
 	row := repository.db.QueryRow(getGistQuery, input.GistId)
 
@@ -102,10 +101,10 @@ func (repository *GistRepository) GetGistById(input GetGistByIdInput) (models.Gi
 	)
 
 	if err != nil {
-		return gist, err
+		return nil, err
 	}
 
-	return gist, nil
+	return &gist, nil
 }
 
 type FindGistsByUserIdInput struct {

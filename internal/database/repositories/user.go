@@ -22,18 +22,17 @@ var createUserQuery = `
 	VALUES ($1, $2, $3, $4);
 `
 
-func (repository *UserRepository) Create(input CreateUserInput) (models.User, error) {
-	user := models.User{}
+func (repository *UserRepository) Create(input CreateUserInput) (*models.User, error) {
 	result, err := repository.db.Exec(createUserQuery, input.Name, input.Username, input.Email, input.Password)
 
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
 	userId, err := result.LastInsertId()
 
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
 	return repository.FindUserById(FindUserByIdInput{UserId: userId})
@@ -58,7 +57,7 @@ var findUserByUsernameQuery = `
 		username = $1;
 `
 
-func (repository *UserRepository) FindUserByUsername(input FindUserByUsernameInput) (models.User, error) {
+func (repository *UserRepository) FindUserByUsername(input FindUserByUsernameInput) (*models.User, error) {
 	user := models.User{}
 
 	err := repository.db.QueryRow(findUserByUsernameQuery, input.Username).Scan(
@@ -72,10 +71,10 @@ func (repository *UserRepository) FindUserByUsername(input FindUserByUsernameInp
 	)
 
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 type FindUserByIdInput struct {
@@ -97,7 +96,7 @@ var findUserByIdQuery = `
 		user_id = $1;
 `
 
-func (repository *UserRepository) FindUserById(input FindUserByIdInput) (models.User, error) {
+func (repository *UserRepository) FindUserById(input FindUserByIdInput) (*models.User, error) {
 	user := models.User{}
 
 	err := repository.db.QueryRow(findUserByIdQuery, input.UserId).Scan(
@@ -111,10 +110,10 @@ func (repository *UserRepository) FindUserById(input FindUserByIdInput) (models.
 	)
 
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 func NewUserRepository(db *sql.DB) *UserRepository {
