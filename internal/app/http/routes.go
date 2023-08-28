@@ -16,6 +16,7 @@ func SetupRoutes(app *fiber.App) {
 	// Services and repositories
 	userRepository := repositories.NewUserRepository(db)
 	gistRepository := repositories.NewGistRepository(db)
+	fileRepository := repositories.NewFileRepository(db)
 	jwtService := services.NewJwtService()
 
 	// Middlewares
@@ -32,4 +33,14 @@ func SetupRoutes(app *fiber.App) {
 	gistsController := controllers.NewGistsController(gistRepository)
 	app.Get("/gists", authMiddleware.Handle, gistsController.GetGists)
 	app.Post("/gists", authMiddleware.Handle, gistsController.CreateGist)
+	app.Get("/gists/:id", authMiddleware.Handle, gistsController.GetGist)
+	app.Put("/gists/:id", authMiddleware.Handle, gistsController.UpdateGist)
+	app.Delete("/gists/:id", authMiddleware.Handle, gistsController.DeleteGist)
+
+	filesController := controllers.NewFilesController(fileRepository, gistRepository)
+	app.Get("/gists/:id/files", authMiddleware.Handle, filesController.GetFiles)
+	app.Post("/gists/:id/files", authMiddleware.Handle, filesController.CreateFile)
+	app.Get("/gists/:id/files/:fileId", authMiddleware.Handle, filesController.GetFile)
+	app.Put("/gists/:id/files/:fileId", authMiddleware.Handle, filesController.UpdateFile)
+	app.Delete("/gists/:id/files/:fileId", authMiddleware.Handle, filesController.DeleteFile)
 }

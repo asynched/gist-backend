@@ -10,11 +10,6 @@ type GistRepository struct {
 	db *sql.DB
 }
 
-type CreateFileInput struct {
-	Filename string
-	Content  string
-}
-
 type CreateGistInput struct {
 	UserId      int64
 	Title       string
@@ -22,17 +17,12 @@ type CreateGistInput struct {
 	Files       []CreateFileInput
 }
 
-var createFileQuery = `
-	INSERT INTO files(filename, content, gist_id)
-	VALUES ($1, $2, $3);
-`
-
 var createGistQuery = `
 	INSERT INTO gists(title, description, user_id)
 	VALUES ($1, $2, $3);
 `
 
-func (repository *GistRepository) Create(input CreateGistInput) (*models.Gist, error) {
+func (repository *GistRepository) CreateGist(input CreateGistInput) (*models.Gist, error) {
 	tx, err := repository.db.Begin()
 
 	if err != nil {
@@ -65,10 +55,10 @@ func (repository *GistRepository) Create(input CreateGistInput) (*models.Gist, e
 
 	tx.Commit()
 
-	return repository.GetGistById(GetGistByIdInput{GistId: gistId})
+	return repository.FindGistById(FindGistByIdInput{GistId: gistId})
 }
 
-type GetGistByIdInput struct {
+type FindGistByIdInput struct {
 	GistId int64
 }
 
@@ -86,7 +76,7 @@ var getGistQuery = `
 		gist_id = $1;
 `
 
-func (repository *GistRepository) GetGistById(input GetGistByIdInput) (*models.Gist, error) {
+func (repository *GistRepository) FindGistById(input FindGistByIdInput) (*models.Gist, error) {
 	gist := models.Gist{}
 
 	row := repository.db.QueryRow(getGistQuery, input.GistId)
@@ -107,7 +97,7 @@ func (repository *GistRepository) GetGistById(input GetGistByIdInput) (*models.G
 	return &gist, nil
 }
 
-type FindGistsByUserIdInput struct {
+type FindGistsInput struct {
 	UserId int64
 }
 
@@ -125,7 +115,7 @@ var getGistsQuery = `
 		user_id = $1;
 `
 
-func (repository *GistRepository) FindGistsByUserId(input FindGistsByUserIdInput) ([]models.Gist, error) {
+func (repository *GistRepository) FindGists(input FindGistsInput) ([]models.Gist, error) {
 	gists := make([]models.Gist, 0)
 
 	rows, err := repository.db.Query(getGistsQuery, input.UserId)
@@ -156,6 +146,50 @@ func (repository *GistRepository) FindGistsByUserId(input FindGistsByUserIdInput
 	}
 
 	return gists, nil
+}
+
+type DeleteGistInput struct {
+	GistId int64
+}
+
+var deleteGistQuery = `
+	DELETE FROM
+		gists
+	WHERE
+		gist_id = $1;
+`
+
+func (repository *GistRepository) DeleteGist(input DeleteGistInput) error {
+	_, err := repository.db.Exec(deleteGistQuery, input.GistId)
+
+	return err
+}
+
+type UpdateGistInput struct {
+	GistId      int64
+	Title       string
+	Description string
+}
+
+var updateGistQuery = `
+	UPDATE
+		gists
+	SET
+		title = $1,
+		description = $2,
+		updated_at = NOW()
+	WHERE
+		gist_id = $3;
+`
+
+func (repository *GistRepository) UpdateGist(input UpdateGistInput) (*models.Gist, error) {
+	_, err := repository.db.Exec(updateGistQuery, input.Title, input.Description, input.GistId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return repository.FindGistById(FindGistByIdInput{GistId: input.GistId})
 }
 
 func NewGistRepository(db *sql.DB) *GistRepository {

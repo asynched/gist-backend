@@ -6,20 +6,10 @@ type CreateGistSchema struct {
 	Files       []CreateFileSchema `json:"files"`
 }
 
-type CreateFileSchema struct {
-	Filename string `json:"filename"`
-	Content  string `json:"content"`
-}
-
 type CreateGistError struct {
 	Title       []string          `json:"title"`
 	Description []string          `json:"description"`
 	Files       []CreateFileError `json:"files"`
-}
-
-type CreateFileError struct {
-	Filename []string `json:"filename"`
-	Content  []string `json:"content"`
 }
 
 func (schema *CreateGistSchema) IsValid() (bool, CreateGistError) {
