@@ -17,7 +17,7 @@ func (service *JwtService) GenerateToken(claims jwt.MapClaims) string {
 	tokenString, err := token.SignedString(service.secretKey)
 
 	if err != nil {
-		log.Fatalf("Could not generate token: %v", err)
+		log.Fatalf("Could not generate token: %v\n", err)
 	}
 
 	return tokenString

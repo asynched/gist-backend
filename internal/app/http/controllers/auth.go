@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"log"
-
 	"github.com/asynched/gist-backend/internal/app/schemas"
 	"github.com/asynched/gist-backend/internal/database/repositories"
 	"github.com/asynched/gist-backend/internal/services"
@@ -31,8 +29,6 @@ func (controller *AuthController) SignUp(ctx *fiber.Ctx) error {
 			"errors":  errors,
 		})
 	}
-
-	log.Printf("Data: %v", data)
 
 	err := controller.userRepository.Create(repositories.CreateUserInput{
 		Name:     data.Name,
